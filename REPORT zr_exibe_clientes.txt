@@ -1,0 +1,224 @@
+REPORT zr_exibe_clientes.
+
+TABLES: zt_clientes.
+
+DATA: go_custom_container  TYPE REF TO cl_gui_custom_container,
+      go_docking_container TYPE REF TO cl_gui_docking_container,
+      go_grid              TYPE REF TO cl_gui_alv_grid.
+
+DATA: gt_clientes      TYPE STANDARD TABLE OF zt_clientes,
+      gt_fieldcat      TYPE lvc_t_fcat,
+      lt_fieldcat_slis TYPE slis_t_fieldcat_alv.
+
+DATA: gs_layout TYPE lvc_s_layo,
+      ls_fcat   TYPE lvc_s_fcat.
+
+DATA: gv_container TYPE scrfname VALUE 'ALV_CONTAINER'.
+
+DATA: ok_code LIKE sy-ucomm.
+
+*-----------------------------------
+* Event Handler Class definition
+*-----------------------------------
+CLASS lcl_event_handler DEFINITION.
+
+  PUBLIC SECTION.
+
+    METHODS:handle_hotspot_click
+      FOR EVENT hotspot_click OF cl_gui_alv_grid
+      IMPORTING e_row_id e_column_id.
+
+
+ENDCLASS. "lcl_event_handler DEFINITION
+
+DATA: go_event_handler TYPE REF TO lcl_event_handler.
+
+*----------------------------------
+* Event Handler Class implimentation
+*----------------------------------
+CLASS lcl_event_handler IMPLEMENTATION.
+
+  METHOD handle_hotspot_click.
+
+    READ TABLE gt_clientes ASSIGNING FIELD-SYMBOL(<fs_clientes>)
+    INDEX e_row_id-index.
+
+    IF sy-subrc = 0.
+      SET PARAMETER ID 'P_NOME' FIELD <fs_clientes>-nome.
+      SET PARAMETER ID 'P_FONE' FIELD <fs_clientes>-fone.
+      SET PARAMETER ID 'P_EMAIL' FIELD <fs_clientes>-email.
+      SET PARAMETER ID 'P_CEP' FIELD <fs_clientes>-cep.
+      SET PARAMETER ID 'P_RUA' FIELD <fs_clientes>-rua.
+      SET PARAMETER ID 'P_NUMERO' FIELD <fs_clientes>-numero.
+      SET PARAMETER ID 'P_BAIRRO' FIELD <fs_clientes>-bairro.
+      SET PARAMETER ID 'P_CIDADE' FIELD <fs_clientes>-cidade.
+
+
+      CALL TRANSACTION 'ZGRAVA_CLIENTES'.
+    ENDIF.
+
+  ENDMETHOD. "handle_hotspot_click
+
+
+ENDCLASS. "lcl_event_handler IMPLEMENTATION
+
+
+START-OF-SELECTION.
+
+  SELECT cod_cliente, nome, fone, email, cep, rua,
+         numero, bairro, cidade
+    FROM zt_clientes
+    INTO TABLE @lt_clientes.
+
+  CHECK lt_clientes[] IS NOT INITIAL.
+
+  CALL SCREEN 9000.
+
+END-OF-SELECTION.
+
+*&---------------------------------------------------------------------*
+*& Module STATUS_9000 OUTPUT
+*&---------------------------------------------------------------------*
+* text
+*----------------------------------------------------------------------*
+MODULE status_9000 OUTPUT.
+
+  SET PF-STATUS 'STATUS_9000'.
+
+  PERFORM z_exibe_tabela.
+
+ENDMODULE. " STATUS_9000 OUTPUT
+*&---------------------------------------------------------------------*
+*& Module USER_COMMAND_9000 INPUT
+*&---------------------------------------------------------------------*
+MODULE user_command_9000 INPUT.
+
+  CASE ok_code.
+    WHEN 'BACK'. "Go Back
+      LEAVE TO SCREEN 0.
+    WHEN 'EXIT'.
+      CALL METHOD go_custom_container->free.
+      LEAVE TO SCREEN 0.
+    WHEN OTHERS.
+  ENDCASE.
+
+  CLEAR ok_code.
+
+ENDMODULE. " USER_COMMAND_9000 INPUT
+*&---------------------------------------------------------------------*
+*& Form Z_EXIBE_TABELA
+*&---------------------------------------------------------------------*
+FORM z_exibe_tabela.
+
+  IF go_custom_container IS INITIAL.
+* Criar container
+    CREATE OBJECT go_custom_container
+      EXPORTING
+        container_name              = gv_container
+      EXCEPTIONS
+        cntl_error                  = 1
+        cntl_system_error           = 2
+        create_error                = 3
+        lifetime_error              = 4
+        lifetime_dynpro_dynpro_link = 5.
+    IF sy-subrc <> 0.
+      MESSAGE 'Erro ao criar container' TYPE 'I'.
+    ENDIF.
+* Criar grid
+    CREATE OBJECT go_grid
+      EXPORTING
+        i_parent          = go_custom_container
+      EXCEPTIONS
+        error_cntl_create = 1
+        error_cntl_init   = 2
+        error_cntl_link   = 3
+        error_dp_create   = 4
+        OTHERS            = 5.
+    IF sy-subrc <> 0.
+      MESSAGE 'Erro ao montar grid' TYPE 'I'.
+    ENDIF.
+
+    PERFORM z_preparar_fieldcat.
+
+    PERFORM z_preparar_layout.
+
+    PERFORM z_exibir_alv.
+
+  ELSE .
+    CALL METHOD go_grid->refresh_table_display
+      EXCEPTIONS
+        finished = 1
+        OTHERS   = 2.
+  ENDIF.
+
+
+ENDFORM. " Z_EXIBE_TABELA
+*&---------------------------------------------------------------------*
+*& Form Z_PREPARAR_FIELDCAT
+*&---------------------------------------------------------------------*
+FORM z_preparar_fieldcat.
+
+  CALL FUNCTION 'REUSE_ALV_FIELDCATALOG_MERGE'
+    EXPORTING
+      i_program_name         = sy-repid
+      i_internal_tabname     = 'LT_CLIENTES'
+      i_client_never_display = 'X'
+      i_inclname             = sy-repid
+    CHANGING
+      ct_fieldcat            = lt_fieldcat_slis.
+
+  CALL FUNCTION 'LVC_TRANSFER_FROM_SLIS'
+    EXPORTING
+      it_fieldcat_alv = lt_fieldcat_slis
+    IMPORTING
+      et_fieldcat_lvc = gt_fieldcat[]
+    TABLES
+      it_data         = lt_clientes[]
+    EXCEPTIONS
+      it_data_missing = 1
+      OTHERS          = 2.
+
+
+  LOOP AT gt_fieldcat.
+    IF gt_fieldcat-fieldname = 'NOME'.
+      gt_fieldcat-hotspot = abap_true.
+    ENDIF.
+
+    MODIFY gt_fieldcat.
+  ENDLOOP.
+
+
+ENDFORM. " Z_PREPARAR_FIELDCAT
+*&---------------------------------------------------------------------*
+*& Form Z_PREPARAR_LAYOUT
+*&---------------------------------------------------------------------*
+FORM z_preparar_layout .
+
+  gs_layout-zebra = 'X' .
+  gs_layout-smalltitle = 'X'.
+
+ENDFORM. " Z_PREPARAR_LAYOUT
+*&---------------------------------------------------------------------*
+*& Form Z_EXIBIR_ALV
+*&---------------------------------------------------------------------*
+FORM z_exibir_alv .
+
+  CALL METHOD go_grid->set_table_for_first_display
+    EXPORTING
+      is_layout                     = gs_layout
+      i_default                     = 'X'
+    CHANGING
+      it_fieldcatalog               = gt_fieldcat[]
+      it_outtab                     = lt_clientes[]
+    EXCEPTIONS
+      invalid_parameter_combination = 1
+      program_error                 = 2
+      too_many_lines                = 3
+      OTHERS                        = 4.
+
+
+  CREATE OBJECT go_event_handler.
+
+  SET HANDLER go_event_handler->handle_hotspot_click FOR go_grid.
+
+ENDFORM. " Z_EXIBIR_ALV

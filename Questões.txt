@@ -1,0 +1,13 @@
+Questões 
+
+1. Considerando a participação de 4 pessoas técnicas para o desenvolvimento dessa solução, responda qual ferramenta acredita ser apropriada para o controle de tarefas da equipe, a ferramenta é ágil? 
+Tive oportunidade de trabalhar com o Jira, DevOps e até mesmo Excel para gerenciamento de atividades, e dessas, o DevOps foi a ferramenta que achei melhor para o controle foi o DevOps, pois nele é possível criar cards de task para cada atividade, sendo possível lançar as horas utilizadas, também tendo um Board para cada sprint, e permitindo mover os cards entre seus status (A iniciar, Em Progresso, Realizado, etc).
+
+2. Você se sente capaz de liderar esta equipe? Por quê? 
+Pensando como a minha vocação, não tenho perfil para liderança. Apesar de já ter trabalhado liderando uma equipe (mais precisamente, na oportunidade que tive ao trabalhar no Censo do IBGE), acredito que tenho perfil mais para trabalhar como parte de uma equipe, e não liderando-a.
+
+3. Se pudesse sugerir uma melhoria, mudança ou oportunidade. O que seria?
+Dentro do contexto do programa de cadastro de clientes, pode ser feito um complemento para que seja permitido realizar o cadastro em massa, realizando o upload de um arquivo Excel ou XML, que será lido pelo programa para cadastrar todos os clientes do arquivo.
+
+4. Acha válido esse desafio para o processo que está participando?
+Sim, acredito que demosntra diferentes maneiras de encontrar uma solução para um mesmo problema, permitindo ver diferentes pontos de vista, além de habilidades que cada candidato possui. É muito válido o desafio, porém, deve ser complementar a fase de entrevista, pois essa fase permite ao candidato mostrar as experiências que teve.

@@ -1,0 +1,39 @@
+FUNCTION zf_grava_cliente.
+*"----------------------------------------------------------------------
+*"*"Interface local:
+*"  IMPORTING
+*"     REFERENCE(IS_DADOS) TYPE  ZT_CLIENTES
+*"  EXPORTING
+*"     REFERENCE(ET_RETORNO) TYPE  ZTT_RETORNO
+*"----------------------------------------------------------------------
+
+  IF is_dados-nome   IS INITIAL OR
+     is_dados-fone   IS INITIAL OR
+     is_dados-email  IS INITIAL OR
+     is_dados-cep    IS INITIAL OR
+     is_dados-rua    IS INITIAL OR
+     is_dados-numero IS INITIAL OR
+     is_dados-bairro IS INITIAL OR
+     is_dados-cidade IS INITIAL.
+    is_dados-status = '@0A@'.
+  ELSE.
+    is_dados-status = '@08@'.
+  ENDIF.
+
+  MODIFY zt_clientes FROM is_dados.
+
+  IF sy-subrc IS INITIAL.
+    COMMIT WORK AND WAIT.
+
+    et_retorno = VALUE #( tipo = 'S'
+                          mensagem = 'Dados gravados com sucesso' ).
+
+  ELSE.
+    ROLLBACK WORK.
+
+    et_retorno = VALUE #( tipo = 'E'
+                          mensagem = 'Dados não foram gravados - Tente novamente' ).
+
+  ENDIF.
+
+ENDFUNCTION.

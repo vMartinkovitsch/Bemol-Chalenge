@@ -1,0 +1,66 @@
+REPORT zr_grava_cliente.
+
+" Tela Inicial - Campos
+SELECTION-SCREEN BEGIN OF BLOCK bl1.
+  PARAMETERS: p_nome   TYPE char10, "zde_nome,
+              p_fone   TYPE char10, "zde_fone,
+              p_email  TYPE char10, "zde_mail,
+              p_cep    TYPE char10, "zde_cep,
+              p_rua    TYPE char10, "zde_rua,
+              p_numero TYPE char10, "zde_num,
+              p_bairro TYPE char10, "zde_bairro,
+              p_cidade TYPE char10. "zde_cidade.
+SELECTION-SCREEN END OF BLOCK bl1.
+
+START-OF-SELECTION.
+
+  " Validar campos
+  IF p_nome IS INITIAL.
+    MESSAGE s000(oo) DISPLAY LIKE 'E' WITH 'Campo Nome obrigatório'.
+    LEAVE LIST-PROCESSING.
+  ELSEIF p_fone IS INITIAL.
+    MESSAGE s000(oo) DISPLAY LIKE 'E' WITH 'Campo Telefone obrigatório'.
+    LEAVE LIST-PROCESSING.
+  ELSEIF p_email IS INITIAL.
+    MESSAGE s000(oo) DISPLAY LIKE 'E' WITH 'Campo Email obrigatório'.
+    LEAVE LIST-PROCESSING.
+  ELSEIF p_cep IS INITIAL.
+    MESSAGE s000(oo) DISPLAY LIKE 'E' WITH 'Campo CEP obrigatório'.
+    LEAVE LIST-PROCESSING.
+  ELSEIF p_rua IS INITIAL.
+    MESSAGE s000(oo) DISPLAY LIKE 'E' WITH 'Campo Rua obrigatório'.
+    LEAVE LIST-PROCESSING.
+  ELSEIF p_numero IS INITIAL.
+    MESSAGE s000(oo) DISPLAY LIKE 'E' WITH 'Campo Número obrigatório'.
+    LEAVE LIST-PROCESSING.
+  ELSEIF p_bairro IS INITIAL.
+    MESSAGE s000(oo) DISPLAY LIKE 'E' WITH 'Campo Bairro obrigatório'.
+    LEAVE LIST-PROCESSING.
+  ELSEIF p_cidade IS INITIAL.
+    MESSAGE s000(oo) DISPLAY LIKE 'E' WITH 'Campo Cidade obrigatório'.
+    LEAVE LIST-PROCESSING.
+  ELSE.
+    " Caso todos os campos estejam preenchidos, será feita a gravação dos dados
+    
+    ls_dados-nome   = p_nome.  
+    ls_dados-fone   = p_fone.  
+    ls_dados-email  = p_email. 
+    ls_dados-cep    = p_cep.   
+    ls_dados-rua    = p_rua.   
+    ls_dados-numero = p_numero.
+    ls_dados-bairro = p_bairro.
+    ls_dados-cidade = p_cidade.
+
+    CALL FUNCTION 'ZF_GRAVA_CLIENTE'
+      EXPORTING
+        is_dados   = ls_dados
+      IMPORTING
+        et_retorno = lt_retorno.
+
+    IF line_exists( lt_retorno[ tipo = 'S' ] ).
+      MESSAGE s000(oo) WITH ls_retorno-mensagem.
+    ELSEIF line_exists( lt_retorno[ tipo = 'E' ] ).
+      MESSAGE s000(oo) DISPLAY LIKE 'E' WITH ls_retorno-mensagem.
+    ENDIF.
+
+  ENDIF.
